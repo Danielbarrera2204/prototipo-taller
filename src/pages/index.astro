@@ -1,0 +1,118 @@
+---
+import '../styles/app.css';
+import { VARIABLES, GRUPOS } from '../lib/variables.js';
+
+const grupos = ['proyecto', 'requisitos', 'pesos'].map((g) => ({ id: g, titulo: GRUPOS[g], vars: VARIABLES.filter((v) => v.grupo === g) }));
+const tabs = [
+  ['configurar', 'Configurar'],
+  ['alternativas', 'Alternativas'],
+  ['resultados', 'Resultados'],
+  ['decision', 'Decisión'],
+  ['escenarios', 'Escenarios'],
+  ['modelo', 'Modelo'],
+  ['pruebas', 'Pruebas'],
+];
+---
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Simulador que compara tres arquitecturas para el procesamiento de facturas de KeepData y recomienda una según el escenario." />
+    <meta name="color-scheme" content="light dark" />
+    <title>Simulador de arquitectura · KeepData</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b2557'/%3E%3Cpath d='M10 7h9l5 5v13H10z' fill='none' stroke='white' stroke-width='2'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <canvas id="fondo" aria-hidden="true"></canvas>
+    <a class="saltar" href="#contenido">Ir al contenido</a>
+    <header class="cabecera">
+      <div class="marca">
+        <span class="marca-logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M9 11h6M9 15h6" stroke-linecap="round"/></svg>
+        </span>
+        <div>
+          <h1>Simulador de arquitectura</h1>
+          <p>KeepData · automatización inteligente de facturas</p>
+        </div>
+      </div>
+      <p class="aviso-estimacion">Todos los valores son <strong>estimaciones del modelo</strong>, no mediciones reales.</p>
+    </header>
+
+    <nav class="tabs" aria-label="Secciones del simulador">
+      <div class="tabs-lista" role="tablist">
+        {tabs.map(([id, label], i) => (
+          <button role="tab" id={`tab-${id}`} aria-controls={`panel-${id}`} aria-selected={i === 0 ? 'true' : 'false'} data-tab={id} tabindex={i === 0 ? 0 : -1}>{label}</button>
+        ))}
+      </div>
+    </nav>
+
+    <div class="layout" id="contenido">
+      <aside class="resumen" id="resumen" aria-live="polite" aria-label="Resumen de la simulación"></aside>
+
+      <main class="paneles">
+        <!-- 1. CONFIGURAR -->
+        <section role="tabpanel" id="panel-configurar" aria-labelledby="tab-configurar" data-panel="configurar">
+          <div class="bloque">
+            <h2>Proyecto</h2>
+            <div class="campo-texto">
+              <label for="proy-nombre">Nombre</label>
+              <input type="text" id="proy-nombre" value="KeepData · Automatización inteligente de facturas" maxlength="120" />
+            </div>
+            <div class="campo-texto">
+              <label for="proy-desc">Características principales</label>
+              <textarea id="proy-desc" rows="3" maxlength="400">Aplicación web que recibe facturas en XML (UBL 2.1), PDF o foto, extrae proveedor, NIT, fecha, subtotal, IVA y total, y las guarda en SQL para consultarlas y exportarlas a Excel. Dirigida a microempresas.</textarea>
+            </div>
+            <p class="nota">Este simulador compara cómo procesar cada factura (el módulo más difícil de reemplazar del proyecto). Autenticación con Firebase y base de datos SQL son comunes a las tres alternativas.</p>
+          </div>
+
+          {grupos.map((g) => (
+            <div class="bloque" id={`grupo-${g.id}`}>
+              <div class="bloque-cab">
+                <h2>{g.titulo}</h2>
+                {g.id === 'pesos' && <span class="suma-pesos" id="suma-pesos"></span>}
+              </div>
+              {g.id === 'pesos' && <p class="nota">Se normalizan para sumar 100 %. Un peso en 0 anula ese criterio en el puntaje.</p>}
+              <div class="rejilla-vars">
+                {g.vars.map((v) => (
+                  <div class="var" data-var={v.id}>
+                    <div class="var-cab">
+                      <label for={`in-${v.id}`}>{v.label}</label>
+                      <span class="var-valor">
+                        <input type="number" id={`in-${v.id}`} name={v.id} min={v.min} max={v.max} step={v.step} value={v.def} inputmode="decimal" aria-describedby={`just-${v.id} err-${v.id}`} />
+                        <span class="unidad">{v.unidad}</span>
+                      </span>
+                    </div>
+                    <input type="range" id={`rg-${v.id}`} min={v.min} max={v.max} step={v.step} value={v.def} aria-label={`${v.label}, deslizador`} tabindex="-1" />
+                    <p class="just" id={`just-${v.id}`}>{v.just}</p>
+                    <p class="error" id={`err-${v.id}`} role="alert" hidden></p>
+                  </div>
+                ))}
+                {g.id === 'proyecto' && (
+                  <div class="var derivada">
+                    <div class="var-cab"><span>Resto de la mezcla: fotos</span><span class="var-valor"><strong id="der-img">30</strong><span class="unidad">%</span></span></div>
+                    <p class="just">Se calcula como 100 − XML − PDF.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+          <div class="acciones">
+            <button class="btn" id="btn-restablecer" type="button">Restablecer valores del escenario base</button>
+          </div>
+        </section>
+
+        <section role="tabpanel" id="panel-alternativas" aria-labelledby="tab-alternativas" data-panel="alternativas" hidden></section>
+        <section role="tabpanel" id="panel-resultados" aria-labelledby="tab-resultados" data-panel="resultados" hidden></section>
+        <section role="tabpanel" id="panel-decision" aria-labelledby="tab-decision" data-panel="decision" hidden></section>
+        <section role="tabpanel" id="panel-escenarios" aria-labelledby="tab-escenarios" data-panel="escenarios" hidden></section>
+        <section role="tabpanel" id="panel-modelo" aria-labelledby="tab-modelo" data-panel="modelo" hidden></section>
+        <section role="tabpanel" id="panel-pruebas" aria-labelledby="tab-pruebas" data-panel="pruebas" hidden></section>
+      </main>
+    </div>
+
+    <div class="tip" id="tip" role="status" hidden></div>
+    <script src="../scripts/fondo.js"></script>
+    <script src="../scripts/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "keepdata-simulador-arquitectura",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "build:single": "astro build && node scripts/inline.mjs",
+    "preview": "astro preview",
+    "test": "node --test tests/modelo.test.js"
+  },
+  "dependencies": {
+    "astro": "^7.4.4"
+  }
+}
